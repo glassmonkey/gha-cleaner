@@ -1,0 +1,68 @@
+name: Verify Action (Reusable)
+
+# Security: This reusable workflow should only be called from trusted workflows
+# in this repository to prevent execution of untrusted code
+
+on:
+  workflow_call:
+    inputs:
+      runner-os:
+        description: 'Runner OS to test on'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      remove-browsers:
+        description: 'Remove browser caches and binaries'
+        required: false
+        type: boolean
+        default: false
+      verbose:
+        description: 'Enable verbose logging'
+        required: false
+        type: boolean
+        default: false
+      test-name:
+        description: 'Name of the verification scenario'
+        required: false
+        type: string
+        default: 'Verify'
+
+jobs:
+  verify:
+    name: ${{ inputs.test-name }} on ${{ inputs.runner-os }}
+    runs-on: ${{ inputs.runner-os }}
+
+    # Security: Restrict permissions to minimum required
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display configuration
+        run: |
+          echo "## Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scenario**: ${{ inputs.test-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner OS**: ${{ inputs.runner-os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Remove Browsers**: ${{ inputs.remove-browsers }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Verbose**: ${{ inputs.verbose }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run gha-cleaner action
+        uses: ./
+        with:
+          remove-browsers: ${{ inputs.remove-browsers }}
+          verbose: ${{ inputs.verbose }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Action completed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Action failed" >> $GITHUB_STEP_SUMMARY
+          fi
