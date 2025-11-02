@@ -1,0 +1,42 @@
+# Inspired by mathio/gha-cleanup (https://github.com/mathio/gha-cleanup)
+# This implementation uses Go with parallel execution (parm: parallel rm) instead of shell scripts with rm commands
+name: 'GitHub Actions Runner Cleanup'
+description: 'Free up disk space on GitHub-hosted runners by removing unnecessary tools and caches with parallel execution'
+author: 'glassmonkey'
+
+branding:
+  icon: 'trash-2'
+  color: 'green'
+
+inputs:
+  remove-browsers:
+    description: 'Remove browser caches and binaries (Chromium, Edge, Chrome, Firefox)'
+    required: false
+    default: 'false'
+  verbose:
+    description: 'Enable verbose logging to see what is being removed'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+
+    - name: Build parm (parallel rm)
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}
+        go build -o parm parm.go
+
+    - name: Run cleanup script
+      shell: bash
+      env:
+        REMOVE_BROWSERS: ${{ inputs.remove-browsers }}
+        VERBOSE: ${{ inputs.verbose }}
+      run: |
+        chmod +x ${{ github.action_path }}/cleanup.sh
+        ${{ github.action_path }}/cleanup.sh
