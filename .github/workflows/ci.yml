@@ -1,0 +1,51 @@
+name: CI
+
+# Security Note: This workflow runs code from PRs, including external forks.
+# The action uses sudo in cleanup.sh, so malicious code could potentially
+# be executed. Consider the following mitigations:
+# 1. Require manual approval for external PRs (via branch protection rules)
+# 2. Review PR code before approving workflow runs
+# 3. Monitor workflow runs for suspicious activity
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'action.yml'
+      - 'parm.go'
+      - 'cleanup.sh'
+      - 'go.mod'
+      - '.github/workflows/**'
+
+# Security: Restrict permissions to minimum required
+permissions:
+  contents: read
+
+jobs:
+  verify-default:
+    name: Default settings
+    uses: ./.github/workflows/_verify.yml
+    with:
+      runner-os: ubuntu-latest
+      remove-browsers: false
+      verbose: false
+      test-name: Default settings
+
+  verify-verbose:
+    name: Verbose mode
+    uses: ./.github/workflows/_verify.yml
+    with:
+      runner-os: ubuntu-latest
+      remove-browsers: false
+      verbose: true
+      test-name: Verbose mode
+
+  verify-remove-browsers:
+    name: Remove browsers + verbose
+    uses: ./.github/workflows/_verify.yml
+    with:
+      runner-os: ubuntu-latest
+      remove-browsers: true
+      verbose: true
+      test-name: Remove browsers + verbose

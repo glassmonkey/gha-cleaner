@@ -1,0 +1,44 @@
+name: Manual Run
+
+# Security: This workflow can only be triggered by repository collaborators
+# with write access, providing a safe way to test changes
+
+on:
+  workflow_dispatch:
+    inputs:
+      remove-browsers:
+        description: 'Remove browser caches and binaries'
+        required: false
+        type: boolean
+        default: false
+      verbose:
+        description: 'Enable verbose logging'
+        required: false
+        type: boolean
+        default: false
+      runner-os:
+        description: 'Runner OS to test on'
+        required: false
+        type: choice
+        default: 'ubuntu-latest'
+        options:
+          - ubuntu-latest
+          - ubuntu-22.04
+          - ubuntu-20.04
+          - macos-latest
+          - macos-13
+          - macos-12
+
+# Security: Restrict permissions to minimum required
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: Run action
+    uses: ./.github/workflows/_verify.yml
+    with:
+      runner-os: ${{ inputs.runner-os }}
+      remove-browsers: ${{ inputs.remove-browsers }}
+      verbose: ${{ inputs.verbose }}
+      test-name: Manual run

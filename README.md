@@ -202,6 +202,91 @@ export VERBOSE=true
 ./cleanup.sh
 ```
 
+### Testing the Action
+
+This repository includes automated tests for the action using a reusable workflow pattern:
+
+#### Workflow Structure
+
+- **_verify.yml** (Reusable workflow): Core verification logic that can be called by other workflows (prefixed with `_` to indicate it's a shared workflow)
+- **ci.yml**: Runs verification automatically on PRs
+- **manual.yml**: Allows manual execution via workflow_dispatch
+
+#### 1. Continuous Integration (Automatic)
+
+The `.github/workflows/ci.yml` workflow runs automatically on pull requests when relevant files are changed. It verifies three scenarios in parallel:
+- Default settings
+- Verbose mode
+- Browser removal with verbose mode
+
+#### 2. Manual Execution
+
+The `.github/workflows/manual.yml` workflow can be triggered manually from the Actions tab:
+
+1. Go to the "Actions" tab in GitHub
+2. Select "Manual Run" workflow
+3. Click "Run workflow"
+4. Choose your configuration:
+   - **Runner OS**: Select which runner to use (ubuntu-latest, macos-latest, etc.)
+   - **Remove Browsers**: Enable/disable browser removal
+   - **Verbose**: Enable/disable verbose logging
+
+#### Benefits of Reusable Workflows
+
+- **DRY principle**: Verification logic is defined once in _verify.yml
+- **Consistency**: All workflows use the same verification procedure
+- **Maintainability**: Updates to verification logic only need to be made in one place
+- **Flexibility**: Easy to add new scenarios by calling the reusable workflow with different parameters
+
+## Security
+
+### Security Considerations for Contributors
+
+This project includes test workflows that execute code from pull requests, including external forks. Please be aware of the following security considerations:
+
+#### CI Workflow
+
+The `ci.yml` workflow runs code from PRs using `pull_request` trigger with `uses: ./`. This means:
+
+- ✅ **Limited permissions**: Workflows have read-only access to repository contents
+- ⚠️ **Code execution risk**: Malicious code in PRs will be executed during tests
+- ⚠️ **sudo usage**: The cleanup.sh script uses `sudo`, which could be exploited
+
+#### Recommended Security Practices
+
+For repository maintainers:
+
+1. **Enable manual approval for external PRs**:
+   - Go to Settings → Actions → General
+   - Under "Fork pull request workflows from outside collaborators"
+   - Select "Require approval for first-time contributors"
+
+2. **Review PR code before approving**:
+   - Always review `action.yml`, `parm.go`, `cleanup.sh` changes
+   - Check for suspicious commands or network calls
+   - Look for attempts to exfiltrate data or escalate privileges
+
+3. **Monitor workflow runs**:
+   - Watch for unexpected behavior during test runs
+   - Check for unusual network activity or long-running jobs
+
+4. **Keep dependencies pinned**:
+   - Use specific commit SHAs for GitHub Actions (e.g., `actions/checkout@<sha>`)
+   - Currently using tags for convenience, but SHAs are more secure
+
+#### For Users of This Action
+
+When using this action in your workflows:
+
+- Review the source code before using it
+- Pin to specific versions/tags instead of `@main`
+- Be aware that the action removes system files (by design)
+- Test in a safe environment first
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please email the maintainer directly instead of opening a public issue. See SECURITY.md for details.
+
 ## License
 
 MIT License
