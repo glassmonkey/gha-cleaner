@@ -2,6 +2,14 @@
 
 A GitHub Actions tool to free up disk space on GitHub-hosted runners by removing unnecessary SDKs, caches, and browser binaries. Can reclaim up to approximately 30GB of disk space.
 
+## Acknowledgments
+
+This project is inspired by [mathio/gha-cleanup](https://github.com/mathio/gha-cleanup/). The key differences are:
+
+1. **Implementation language**: Go instead of shell scripts
+2. **Execution model**: Parallel deletion (parm) using goroutines instead of sequential `rm` commands
+3. **Performance**: Faster cleanup through concurrent directory removal
+
 ## parm: Parallel RM
 
 This tool uses **parm** (parallel rm), a custom Go implementation that aims to be compatible with the `rm` command while providing parallel execution using goroutines. This makes file deletion faster and more efficient than traditional sequential deletion.
@@ -197,11 +205,3 @@ export VERBOSE=true
 ## License
 
 MIT License
-
-## Acknowledgments
-
-This project is inspired by [mathio/gha-cleanup](https://github.com/mathio/gha-cleanup/). The key differences are:
-
-1. **Implementation language**: Go instead of shell scripts
-2. **Execution model**: Parallel deletion (parm) using goroutines instead of sequential `rm` commands
-3. **Performance**: Faster cleanup through concurrent directory removal
