@@ -11,10 +11,6 @@
 # Output of the go coverage tool
 *.out
 
-# Built binaries
-parm
-parm-*
-
 # Go workspace file
 go.work
 
@@ -27,3 +23,5 @@ go.work
 
 # macOS
 .DS_Store
+
+tmp
