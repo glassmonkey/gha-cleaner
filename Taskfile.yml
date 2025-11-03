@@ -3,7 +3,7 @@ version: '3'
 env:
   GO_VERSION: '1.25.3'
   BINARY_NAME: parm
-  BINARY_UNIX: '{{.BINARY_NAME}}_unix'
+  BUILD_DIR: tmp
 
 tasks:
   default:
@@ -22,33 +22,19 @@ tasks:
     deps:
       - install
     cmds:
-      - go build -o {{.BINARY_NAME}} parm.go
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} parm.go
     sources:
       - parm.go
     generates:
-      - '{{.BINARY_NAME}}'
-
-  build-linux:
-    desc: Build binary for Linux
-    deps:
-      - install
-    env:
-      GOOS: linux
-      GOARCH: amd64
-    cmds:
-      - go build -o {{.BINARY_UNIX}} parm.go
-    sources:
-      - parm.go
-    generates:
-      - '{{.BINARY_UNIX}}'
+      - '{{.BUILD_DIR}}/{{.BINARY_NAME}}'
 
   test:
     desc: Run unit tests with coverage
     deps:
       - install
     cmds:
-      - go test -v -race -coverprofile=coverage.out ./...
-      - go tool cover -func=coverage.out
+      - go test -v -race -coverprofile={{.BUILD_DIR}}/coverage.out ./...
+      - go tool cover -func={{.BUILD_DIR}}/coverage.out
 
   test-short:
     desc: Run unit tests (short mode)
@@ -62,7 +48,7 @@ tasks:
     deps:
       - test
     cmds:
-      - go tool cover -html=coverage.out -o coverage.html
+      - go tool cover -html={{.BUILD_DIR}}/coverage.out -o {{.BUILD_DIR}}/coverage.html
 
   bench:
     desc: Run benchmarks
@@ -76,8 +62,8 @@ tasks:
     deps:
       - install
     cmds:
-      - go test -v -bench=. -benchmem -run=^$ -cpuprofile=cpu.prof ./...
-      - go tool pprof -http=:8080 cpu.prof
+      - go test -v -bench=. -benchmem -run=^$ -cpuprofile={{.BUILD_DIR}}/cpu.prof ./...
+      - go tool pprof -http=:8080 {{.BUILD_DIR}}/cpu.prof
 
   lint:
     desc: Run linter (requires golangci-lint)
@@ -104,9 +90,7 @@ tasks:
   clean:
     desc: Clean build artifacts and generated files
     cmds:
-      - rm -f {{.BINARY_NAME}} {{.BINARY_UNIX}}
-      - rm -f coverage.out coverage.html
-      - rm -f cpu.prof
+      - rm -rf {{.BUILD_DIR}}/*
       - go clean -testcache
 
   all:
@@ -132,7 +116,7 @@ tasks:
     deps:
       - build
     cmds:
-      - ./{{.BINARY_NAME}}
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}}
 
   help:
     desc: Show this help message
