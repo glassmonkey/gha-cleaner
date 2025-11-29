@@ -1,0 +1,124 @@
+version: '3'
+
+env:
+  GO_VERSION: '1.25.3'
+  BINARY_NAME: parm
+  BUILD_DIR: tmp
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install dependencies using go mod
+    cmds:
+      - go mod download
+      - go mod verify
+
+  build:
+    desc: Build the parm binary
+    deps:
+      - install
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} parm.go
+    sources:
+      - parm.go
+    generates:
+      - '{{.BUILD_DIR}}/{{.BINARY_NAME}}'
+
+  test:
+    desc: Run unit tests with coverage
+    deps:
+      - install
+    cmds:
+      - go test -v -race -coverprofile={{.BUILD_DIR}}/coverage.out ./...
+      - go tool cover -func={{.BUILD_DIR}}/coverage.out
+
+  test-short:
+    desc: Run unit tests (short mode)
+    deps:
+      - install
+    cmds:
+      - go test -v -short ./...
+
+  test-coverage:
+    desc: Generate HTML coverage report
+    deps:
+      - test
+    cmds:
+      - go tool cover -html={{.BUILD_DIR}}/coverage.out -o {{.BUILD_DIR}}/coverage.html
+
+  bench:
+    desc: Run benchmarks
+    deps:
+      - install
+    cmds:
+      - go test -v -bench=. -benchmem -run=^$ ./...
+
+  bench-profile:
+    desc: Run benchmarks with CPU profiling
+    deps:
+      - install
+    cmds:
+      - go test -v -bench=. -benchmem -run=^$ -cpuprofile={{.BUILD_DIR}}/cpu.prof ./...
+      - go tool pprof -http=:8080 {{.BUILD_DIR}}/cpu.prof
+
+  lint:
+    desc: Run linter (requires golangci-lint)
+    deps:
+      - install
+    cmds:
+      - golangci-lint run ./... --timeout=5m
+    ignore_error: true
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+      - goimports -w .
+    ignore_error: true
+
+  vet:
+    desc: Run go vet
+    deps:
+      - install
+    cmds:
+      - go vet ./...
+
+  clean:
+    desc: Clean build artifacts and generated files
+    cmds:
+      - rm -rf {{.BUILD_DIR}}/*
+      - go clean -testcache
+
+  all:
+    desc: Run install, vet, lint, test, build, and bench
+    deps:
+      - install
+      - vet
+      - lint
+      - test
+      - build
+      - bench
+
+  dev:
+    desc: Run development tasks (install, vet, test, build)
+    deps:
+      - install
+      - vet
+      - test
+      - build
+
+  run:
+    desc: Build and run the parm binary
+    deps:
+      - build
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}}
+
+  help:
+    desc: Show this help message
+    cmds:
+      - task --list-all
